@@ -1,50 +1,76 @@
 # worlds/content_warning/logic.py
 # Helper state-check functions used by rules.py
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 from BaseClasses import CollectionState
 
-from ..names import item_names as iname
+from .names import item_names as iname
 
 if TYPE_CHECKING:
-    from .. import ContentWarningWorld
+    from . import ContentWarningWorld
 
 
-def has_safety_gear(state: CollectionState, player: int) -> bool:
-    """Player has at least one piece of survival/safety equipment."""
-    return state.has_any(
-        {iname.shock_stick, iname.rescue_hook, iname.defibrillator},
-        player
+# ---------------------------------------------------------------------------
+# Camera & Exploration
+# ---------------------------------------------------------------------------
+
+def can_enter_dungeon(state: CollectionState, player: int) -> bool:
+    """Player has at least one Progressive Camera upgrade — ready to film."""
+    return state.count(iname.prog_camera, player) >= 1
+
+
+def can_explore_mid_dungeon(state: CollectionState, player: int) -> bool:
+    """Player has enough oxygen to search deeper parts of The Old World."""
+    return state.count(iname.prog_oxygen, player) >= 1
+
+
+def can_explore_late_dungeon(state: CollectionState, player: int) -> bool:
+    """Player has the oxygen and camera upgrades for the deepest sections."""
+    return (
+        state.count(iname.prog_oxygen, player) >= 2
+        and state.count(iname.prog_camera, player) >= 1
     )
 
 
-def has_health_buffer(state: CollectionState, player: int) -> bool:
-    """Player has extra health to survive deep-dungeon encounters."""
-    return state.has_any({iname.increased_health, iname.health_upgrade}, player)
+# ---------------------------------------------------------------------------
+# Safety Gear
+# ---------------------------------------------------------------------------
 
-
-def has_oxygen_buffer(state: CollectionState, player: int) -> bool:
-    """Player has enough oxygen to explore longer without surfacing."""
-    return state.has_any({iname.increased_oxygen, iname.oxygen_tank_upgrade}, player)
+def has_safety_gear(state: CollectionState, player: int) -> bool:
+    """Player has at least one piece of survival / safety equipment."""
+    return state.has_any(
+        {iname.shock_stick, iname.rescue_hook, iname.defibrillator},
+        player,
+    )
 
 
 def can_survive_dungeon(state: CollectionState, player: int) -> bool:
-    """Full survival kit for dangerous deep-dungeon encounters."""
+    """Full survival kit: safety gear AND enough oxygen for dangerous encounters."""
     return (
         has_safety_gear(state, player)
-        and has_health_buffer(state, player)
-        and has_oxygen_buffer(state, player)
+        and state.count(iname.prog_oxygen, player) >= 3
     )
 
 
+# ---------------------------------------------------------------------------
+# Progressive Views (gates view milestone checks)
+# ---------------------------------------------------------------------------
+
 def view_boost_count(state: CollectionState, player: int) -> int:
-    """Returns a weighted count of view-boosting items the player has received.
-    Big View Boost counts as 2 units; View Boost counts as 1."""
-    count = state.count(iname.view_boost, player)
-    count += state.count(iname.big_view_boost, player) * 2
-    return count
+    """Returns the number of Progressive Views items the player has collected.
+    Each copy multiplies video view income by 1.1×."""
+    return state.count(iname.prog_views, player)
 
 
 def has_views(state: CollectionState, player: int, required: int) -> bool:
-    """True if the player's accumulated view boosts meet the required threshold."""
+    """True if the player has at least *required* Progressive Views items."""
     return view_boost_count(state, player) >= required
+
+
+# ---------------------------------------------------------------------------
+# Counting reachable locations (used for goal/sanity rules)
+# ---------------------------------------------------------------------------
+
+def count_reachable(state: CollectionState, player: int, locations: List[str]) -> int:
+    """Return how many of the given location names are currently reachable."""
+    return sum(1 for loc in locations if state.can_reach_location(loc, player))

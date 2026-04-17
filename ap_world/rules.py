@@ -1,138 +1,312 @@
 # worlds/content_warning/rules.py
 
-from typing import TYPE_CHECKING
-from worlds.generic.Rules import add_rule, set_rule
-from BaseClasses import CollectionState, ItemClassification
+from typing import TYPE_CHECKING, List, Tuple
+from worlds.generic.Rules import add_rule
+from BaseClasses import CollectionState
 
-from ..names import item_names as iname
-from ..names import location_names as lname
-from ..names import region_names as rname
+from .names import item_names as iname
+from .names import location_names as lname
+from .names import region_names as rname
 from .locations import location_table
 from . import logic
 
 if TYPE_CHECKING:
-    from .. import ContentWarningWorld
+    from . import ContentWarningWorld
 
 
 # ---------------------------------------------------------------------------
-# Monsters that are considered dangerous enough to require safety gear
-# (on Easy logic).  Anything not listed here is accessible by default.
+# Monsters that require safety gear in Easy logic
+# (subset of mid/late/difficult monsters)
 # ---------------------------------------------------------------------------
 _DANGEROUS_MONSTERS = {
     "Filmed Knifo",
-    "Filmed Ultra Knifo",
-    "Filmed Harpooner",
-    "Filmed Iron Maiden",
-    "Filmed Grabber Snake",
     "Filmed Big Slap",
-    "Filmed Black Hole Bot",
     "Filmed Streamer",
-    "Filmed Angler",
     "Filmed Bomber",
     "Filmed Fire",
+    "Filmed Harpooner",
 }
 
-# Monsters that additionally require full survival gear (safety + health + oxygen).
+# Monsters that require the FULL survival kit (safety gear + high oxygen)
 _VERY_DANGEROUS_MONSTERS = {
     "Filmed Ultra Knifo",
-    "Filmed Iron Maiden",
-    "Filmed Grabber Snake",
     "Filmed Angler",
+    "Filmed Black Hole Bot",
 }
 
 # ---------------------------------------------------------------------------
-# View milestone → minimum view_boost_count threshold
+# View milestone order and Progressive Views thresholds
 # ---------------------------------------------------------------------------
+_VIEW_MILESTONE_ORDER: List[Tuple[int, str]] = [
+    (1_000,   lname.reached_1k),
+    (2_000,   lname.reached_2k),
+    (3_000,   lname.reached_3k),
+    (13_000,  lname.reached_13k),
+    (26_000,  lname.reached_26k),
+    (39_000,  lname.reached_39k),
+    (43_000,  lname.reached_43k),
+    (85_000,  lname.reached_85k),
+    (128_000, lname.reached_128k),
+    (150_000, lname.reached_150k),
+    (220_000, lname.reached_220k),
+    (325_000, lname.reached_325k),
+    (375_000, lname.reached_375k),
+    (430_000, lname.reached_430k),
+    (645_000, lname.reached_645k),
+]
+
+# How many Progressive Views items are required before each higher milestone
+# is considered logically reachable (lower milestones need none).
 _VIEW_THRESHOLDS = {
-    lname.reached_85k:  1,
-    lname.reached_128k: 1,
-    lname.reached_150k: 2,
-    lname.reached_220k: 2,
-    lname.reached_325k: 3,
-    lname.reached_375k: 3,
-    lname.reached_430k: 4,
-    lname.reached_645k: 5,
+    lname.reached_85k:  2,
+    lname.reached_128k: 3,
+    lname.reached_150k: 4,
+    lname.reached_220k: 5,
+    lname.reached_325k: 6,
+    lname.reached_375k: 7,
+    lname.reached_430k: 8,
+    lname.reached_645k: 10,
 }
 
+
+def _get_views_goal_milestone(target: int) -> str:
+    """Return the location name of the nearest view milestone at or above target."""
+    for views, loc_name in _VIEW_MILESTONE_ORDER:
+        if views >= target:
+            return loc_name
+    return lname.reached_645k  # fallback
+
+
+# ---------------------------------------------------------------------------
+# Region rules
+# ---------------------------------------------------------------------------
 
 def set_region_rules(world: "ContentWarningWorld") -> None:
     """Set entrance access rules between regions."""
     multiworld = world.multiworld
     player = world.player
 
-    # Hub is always accessible from Menu — no rule needed.
+    # Sky Island is always accessible from Menu — no rule needed.
 
-    # Dungeon requires at least the camera upgrade to enter (you need equipment
-    # to have a reason to go down; matches the game's progression feel).
+    # The Old World requires a Progressive Camera to enter.
     multiworld.get_entrance(
         f"{rname.hub} -> {rname.dungeon}", player
-    ).access_rule = lambda state: state.has(iname.camera_upgrade, player)
+    ).access_rule = lambda state: logic.can_enter_dungeon(state, player)
 
+
+# ---------------------------------------------------------------------------
+# Location rules
+# ---------------------------------------------------------------------------
 
 def set_location_rules(world: "ContentWarningWorld") -> None:
     """Set individual location access rules and the completion condition."""
     multiworld = world.multiworld
     player = world.player
     options = world.options
-    easy_logic = (options.dungeon_logic.value == options.dungeon_logic.option_easy)
 
-    # ---- Completion condition ----
+    easy_logic  = (options.dungeon_logic.value == options.dungeon_logic.option_easy)
+    quota_on    = bool(options.quota_requirement.value)
+    quota_count = options.quota_count.value
+
+    # -----------------------------------------------------------------------
+    # Completion condition
+    # -----------------------------------------------------------------------
     multiworld.completion_condition[player] = lambda state: state.has(
         lname.victory, player
     )
+    victory_loc = multiworld.get_location(lname.victory, player)
 
-    # ---- Victory location rules ----
-    # Viral Sensation goal: reach the top view milestone.
-    if options.goal.value == options.goal.option_viral_sensation:
+    # -----------------------------------------------------------------------
+    # Primary Goal rules
+    # -----------------------------------------------------------------------
+    goal = options.goal.value
+
+    if goal == options.goal.option_viral_sensation:
+        # Reach the highest view milestone.
+        add_rule(victory_loc, lambda state: logic.has_views(state, player, 10))
+
+    elif goal == options.goal.option_views_goal:
+        # Reach the nearest milestone at or above the configured target.
+        milestone = _get_views_goal_milestone(options.views_goal_target.value)
+        threshold = _VIEW_THRESHOLDS.get(milestone, 0)
+        if threshold:
+            add_rule(
+                victory_loc,
+                lambda state, t=threshold: logic.has_views(state, player, t),
+            )
         add_rule(
-            multiworld.get_location(lname.victory, player),
-            lambda state: logic.has_views(state, player, 5)
+            victory_loc,
+            lambda state, m=milestone: state.can_reach_location(m, player),
         )
 
-    # Content Complete goal: film every monster and artifact.
-    elif options.goal.value == options.goal.option_content_complete:
-        for loc_name, loc_data in location_table.items():
-            if loc_data.location_group in ("Monsters", "Artifacts"):
-                add_rule(
-                    multiworld.get_location(lname.victory, player),
-                    lambda state, ln=loc_name: state.can_reach_location(ln, player)
-                )
+    elif goal == options.goal.option_quota_goal:
+        # Must reach and complete quota N (requires Quota Requirement on).
+        if quota_on and quota_count >= 1:
+            nth_quota = lname.met_quota_prefix + str(quota_count)
+            add_rule(
+                victory_loc,
+                lambda state, q=nth_quota: state.can_reach_location(q, player),
+            )
+        else:
+            # Quota disabled — fall back to viral sensation
+            add_rule(victory_loc, lambda state: logic.has_views(state, player, 10))
 
-    # ---- View milestone rules ----
+    elif goal == options.goal.option_monster_hunter:
+        count = options.monster_hunter_count.value
+        monster_locs: List[str] = [
+            n for n, d in location_table.items()
+            if d.location_group == "Monsters"
+        ]
+        add_rule(
+            victory_loc,
+            lambda state, c=count, locs=monster_locs:
+                logic.count_reachable(state, player, locs) >= c,
+        )
+
+    elif goal == options.goal.option_hat_collector:
+        count = options.hat_collector_count.value
+        hat_locs: List[str] = [
+            n for n, d in location_table.items()
+            if d.location_group == "Hats"
+        ]
+        add_rule(
+            victory_loc,
+            lambda state, c=count, locs=hat_locs:
+                logic.count_reachable(state, player, locs) >= c,
+        )
+
+    elif goal == options.goal.option_item_collector:
+        count = options.item_collector_count.value
+        item_locs: List[str] = [
+            n for n, d in location_table.items()
+            if d.location_group in ("Store Purchases", "Emotes")
+        ]
+        add_rule(
+            victory_loc,
+            lambda state, c=count, locs=item_locs:
+                logic.count_reachable(state, player, locs) >= c,
+        )
+
+    # -----------------------------------------------------------------------
+    # Additional sanity win conditions (stack on top of primary goal)
+    # -----------------------------------------------------------------------
+
+    # Content Complete Sanity: must also film N monsters.
+    if options.content_complete_sanity.value:
+        cc_count = options.content_complete_monster_count.value
+        monster_locs = [
+            n for n, d in location_table.items()
+            if d.location_group == "Monsters"
+        ]
+        add_rule(
+            victory_loc,
+            lambda state, c=cc_count, locs=monster_locs:
+                logic.count_reachable(state, player, locs) >= c,
+        )
+
+    # Itemsanity: must also purchase N store items/emotes.
+    if options.itemsanity.value:
+        is_count = options.itemsanity_count.value
+        is_locs = [
+            n for n, d in location_table.items()
+            if d.location_group in ("Store Purchases", "Emotes")
+        ]
+        add_rule(
+            victory_loc,
+            lambda state, c=is_count, locs=is_locs:
+                logic.count_reachable(state, player, locs) >= c,
+        )
+
+    # Hatsanity: must also purchase N hats.
+    if options.hatsanity.value:
+        hs_count = options.hatsanity_count.value
+        hs_locs = [
+            n for n, d in location_table.items()
+            if d.location_group == "Hats"
+        ]
+        add_rule(
+            victory_loc,
+            lambda state, c=hs_count, locs=hs_locs:
+                logic.count_reachable(state, player, locs) >= c,
+        )
+
+    # -----------------------------------------------------------------------
+    # View milestone rules
+    # -----------------------------------------------------------------------
     for milestone, threshold in _VIEW_THRESHOLDS.items():
+        # Skip milestones ≥128k if quota count < 4 (only filler placed there;
+        # the item placement in __init__.py enforces the filler, but we still
+        # need to allow access so locations can be reached for the goal).
         add_rule(
             multiworld.get_location(milestone, player),
-            lambda state, t=threshold: logic.has_views(state, player, t)
+            lambda state, t=threshold: logic.has_views(state, player, t),
         )
 
-    # ---- Monster filming rules (Easy logic only) ----
+    # -----------------------------------------------------------------------
+    # Dungeon depth rules (mid / late stage checks)
+    # -----------------------------------------------------------------------
+    for loc_name, loc_data in location_table.items():
+        if loc_data.region != rname.dungeon:
+            continue
+
+        if loc_data.game_stage == "mid":
+            add_rule(
+                multiworld.get_location(loc_name, player),
+                lambda state: logic.can_explore_mid_dungeon(state, player),
+            )
+        elif loc_data.game_stage in ("late", "difficult"):
+            add_rule(
+                multiworld.get_location(loc_name, player),
+                lambda state: logic.can_explore_late_dungeon(state, player),
+            )
+
+    # -----------------------------------------------------------------------
+    # Monster filming safety rules (Easy logic only)
+    # -----------------------------------------------------------------------
     if easy_logic:
-        for monster in _DANGEROUS_MONSTERS:
-            if monster in _VERY_DANGEROUS_MONSTERS:
+        for monster_name in _DANGEROUS_MONSTERS:
+            # Only apply rules to monsters that actually exist in the location table
+            if monster_name not in location_table:
+                continue
+            if monster_name in _VERY_DANGEROUS_MONSTERS:
                 add_rule(
-                    multiworld.get_location(monster, player),
-                    lambda state: logic.can_survive_dungeon(state, player)
+                    multiworld.get_location(monster_name, player),
+                    lambda state: logic.can_survive_dungeon(state, player),
                 )
             else:
                 add_rule(
-                    multiworld.get_location(monster, player),
-                    lambda state: logic.has_safety_gear(state, player)
+                    multiworld.get_location(monster_name, player),
+                    lambda state: logic.has_safety_gear(state, player),
                 )
 
-    # ---- Quota rules: each quota requires the previous one be reachable ----
-    for i in range(2, 6):
-        prev = lname.met_quota_prefix + str(i - 1)
-        curr = lname.met_quota_prefix + str(i)
-        add_rule(
-            multiworld.get_location(curr, player),
-            lambda state, p=prev: state.can_reach_location(p, player)
-        )
+        for monster_name in _VERY_DANGEROUS_MONSTERS:
+            if monster_name not in location_table:
+                continue
+            add_rule(
+                multiworld.get_location(monster_name, player),
+                lambda state: logic.can_survive_dungeon(state, player),
+            )
 
-    # ---- Day extraction rules: each day requires the previous ----
+    # -----------------------------------------------------------------------
+    # Quota rules: each quota N requires quota N-1 to be reachable.
+    # Only create rules for quotas that are actually in the pool.
+    # -----------------------------------------------------------------------
+    if quota_on:
+        for i in range(2, quota_count + 1):
+            prev = lname.met_quota_prefix + str(i - 1)
+            curr = lname.met_quota_prefix + str(i)
+            add_rule(
+                multiworld.get_location(curr, player),
+                lambda state, p=prev: state.can_reach_location(p, player),
+            )
+
+    # -----------------------------------------------------------------------
+    # Day extraction rules: each day requires the previous.
+    # -----------------------------------------------------------------------
     for i in range(2, 16):
         prev = lname.extracted_footage_prefix + str(i - 1)
         curr = lname.extracted_footage_prefix + str(i)
         add_rule(
             multiworld.get_location(curr, player),
-            lambda state, p=prev: state.can_reach_location(p, player)
+            lambda state, p=prev: state.can_reach_location(p, player),
         )

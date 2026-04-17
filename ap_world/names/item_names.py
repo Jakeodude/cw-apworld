@@ -1,51 +1,36 @@
 # item names referenced in items.py
 
-# ---- Camera Equipment ----
-camera_upgrade    = "Camera Upgrade"
-advanced_camera   = "Advanced Camera"
-parabolic_mic     = "Parabolic Mic"
-rescue_hook       = "Rescue Hook"
-shock_stick       = "Shock Stick"
-goo_ball_pack     = "Goo Ball Pack"
-defibrillator     = "Defibrillator"
+# ---- Progressive Camera ----
+prog_camera      = "Progressive Camera"   # 3 copies: 90→120→150→180 seconds of film
 
-# ---- Health & Oxygen ----
-increased_health      = "Increased Health"
-health_upgrade        = "Health Upgrade"
-increased_oxygen      = "Increased Oxygen"
-oxygen_tank_upgrade   = "Oxygen Tank Upgrade"
-extra_oxygen          = "Extra Oxygen"
+# ---- Progressive Oxygen ----
+prog_oxygen      = "Progressive Oxygen"   # 4 copies: 500→700→900→1100→1500 seconds
 
-# ---- Money ($) ----
-money_boost     = "Money Boost"
-big_money_boost = "Big Money Boost"
-extra_cash      = "Extra Cash"
-cash_500        = "$500"
-cash_2000       = "$2000"
+# ---- Diving Bell Upgrades ----
+diving_bell_o2      = "Diving Bell O2 Refill"   # refills oxygen while inside diving bell
+diving_bell_charger = "Diving Bell Charger"      # charges items while inside diving bell
 
-# ---- Meta Coins ----
-meta_coin          = "Meta Coin"
-meta_coin_pack     = "Meta Coin Pack"
-big_meta_coin_pack = "Big Meta Coin Pack"
+# ---- Progressive Views ----
+prog_views       = "Progressive Views"    # 10 copies: each multiplies video views by 1.1x
 
-# ---- View Boosts ----
-view_boost      = "View Boost"
-big_view_boost  = "Big View Boost"
-viral_moment    = "Viral Moment"
+# ---- Rescue / Safety ----
+rescue_hook    = "Rescue Hook"
+shock_stick    = "Shock Stick"
+defibrillator  = "Defibrillator"
 
-# ---- Filler ----
-nothing           = "Nothing"
-extra_views       = "Extra Views"
-small_cash        = "Small Cash"
-minor_health_pack = "Minor Health Pack"
-minor_oxygen      = "Minor Oxygen"
-monster_repellent = "Monster Repellent"
+# ---- Money ($) — filler ----
+money_small  = "$200"
+money_medium = "$400"
+money_large  = "$600"
+
+# ---- Meta Coins — filler ----
+meta_coins_small  = "1,000 Meta Coins"
+meta_coins_medium = "2,000 Meta Coins"
+meta_coins_large  = "3,000 Meta Coins"
 
 # ---- Traps ----
-camera_malfunction = "Camera Malfunction"
-monster_swarm      = "Monster Swarm"
-oxygen_leak        = "Oxygen Leak"
-low_battery        = "Low Battery"
+monster_spawn = "Monster Spawn Trap"   # spawns a random monster (not on Sky Island)
+ragdoll_trap  = "Ragdoll Trap"          # ragdolls the player for 5 seconds
 
 # ---- Victory / Event ----
 viral_sensation = "Viral Sensation"
