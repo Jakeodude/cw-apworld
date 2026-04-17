@@ -1,17 +1,18 @@
 # worlds/content_warning/options.py
 
 from dataclasses import dataclass
-from Options import Choice, Toggle, DefaultOnToggle, Range, PerGameCommonOptions
+from Options import OptionSet, Toggle, DefaultOnToggle, Range, PerGameCommonOptions
 
 
 # ===========================================================================
 # GOAL
 # ===========================================================================
 
-class GoalChoice(Choice):
-    """Choose the primary victory condition for your run.
+class GoalChoice(OptionSet):
+    """Choose one or more victory conditions. All selected conditions must be
+    completed to win. Select any combination from the list below.
 
-    viral_sensation:  Reach 645,000 total views — the highest view milestone.
+    viral_sensation:  Reach 1,000,000 total views — the highest view milestone.
     views_goal:       Reach a configurable total view count (see Views Goal Target).
     quota_goal:       Reach and complete a configurable number of quotas
                       (see Quota Requirement and Quota Count; requires Quota Requirement on).
@@ -20,13 +21,15 @@ class GoalChoice(Choice):
     item_collector:   Purchase a configurable number of store items and emotes
                       (see Item Collector Count)."""
     display_name = "Goal"
-    option_viral_sensation = 0
-    option_views_goal      = 1
-    option_quota_goal      = 2
-    option_monster_hunter  = 3
-    option_hat_collector   = 4
-    option_item_collector  = 5
-    default = 0
+    valid_keys = frozenset({
+        "viral_sensation",
+        "views_goal",
+        "quota_goal",
+        "monster_hunter",
+        "hat_collector",
+        "item_collector",
+    })
+    default = frozenset({"viral_sensation"})
 
 
 class ViewsGoalTarget(Range):
@@ -35,13 +38,14 @@ class ViewsGoalTarget(Range):
     Ignored when Goal is not 'views_goal'."""
     display_name = "Views Goal Target"
     range_start  = 1000
-    range_end    = 645000
+    range_end    = 1000000
     default      = 128000
 
 
 class MonsterHunterCount(Range):
     """When Goal is 'monster_hunter', the number of different monsters that must
-    be filmed to win. Minimum 5, maximum 33."""
+    be filmed to win. Minimum 5, maximum 33.
+    Note: an average 5-quota run encounters an average of 15-20 monsters."""
     display_name = "Monster Hunter Count"
     range_start  = 5
     range_end    = 33
@@ -98,15 +102,13 @@ class QuotaCount(Range):
 class ContentCompleteSanity(Toggle):
     """When enabled, you must ALSO film a certain number of different monsters
     to win, on top of the primary Goal.
-    Configure the required count with Content Complete Monster Count.
-    Suggested minimum: 12. Off by default."""
+    Configure the required count with Content Complete Monster Count."""
     display_name = "Content Complete Sanity"
 
 
 class ContentCompleteMonsterCount(Range):
     """The number of different monsters that must be filmed as an additional
-    victory requirement when Content Complete Sanity is enabled.
-    Minimum 5, maximum 33. Default 12 (as suggested)."""
+    victory requirement when Content Complete Sanity is enabled."""
     display_name = "Content Complete Monster Count"
     range_start  = 5
     range_end    = 33
@@ -116,15 +118,13 @@ class ContentCompleteMonsterCount(Range):
 class Itemsanity(Toggle):
     """When enabled, you must ALSO purchase a certain number of different store
     items and emotes to win (in addition to the primary Goal).
-    Configure the required count with Itemsanity Count.
-    Counts both Store Purchases and Emotes."""
+    Configure the required count with Itemsanity Count."""
     display_name = "Itemsanity"
 
 
 class ItemsanityCount(Range):
     """The number of different store items/emotes that must be purchased as an
-    additional victory requirement when Itemsanity is enabled.
-    Minimum 5, maximum 33."""
+    additional victory requirement when Itemsanity is enabled."""
     display_name = "Itemsanity Count"
     range_start  = 5
     range_end    = 33
@@ -140,8 +140,7 @@ class Hatsanity(Toggle):
 
 class HatsanityCount(Range):
     """The number of hats that must be purchased as an additional victory
-    requirement when Hatsanity is enabled.
-    Minimum 5, maximum 31."""
+    requirement when Hatsanity is enabled."""
     display_name = "Hatsanity Count"
     range_start  = 5
     range_end    = 31
@@ -179,27 +178,10 @@ class Sponsorsanity(Toggle):
 
 class DifficultMonsters(Toggle):
     """When enabled, difficult/rare monsters (Flicker, Cam Creep, Infiltrator,
-    Black Hole Bot, Ear, Snail Spawner, Big Slap, Ultra Knifo, Angler) can
+    Black Hole Bot, Ear, Snail Spawner, Big Slap, Ultra Knifo) can
     have real (non-filler) items behind their filming checks.
     When disabled (default), those checks always contain filler rewards."""
     display_name = "Difficult Monsters Have Real Items"
-
-
-# ===========================================================================
-# LOGIC
-# ===========================================================================
-
-class DungeonLogic(Choice):
-    """How strictly survival gear is logically required to access dungeon checks.
-
-    easy: Shock Stick, Rescue Hook, or Defibrillator are required before dangerous
-          monster filming locations are in logic.
-    hard: Nothing is required; the player may face dangerous situations without
-          safety equipment."""
-    display_name = "Dungeon Logic"
-    option_easy = 0
-    option_hard = 1
-    default = 0
 
 
 # ===========================================================================
@@ -233,6 +215,3 @@ class ContentWarningGameOptions(PerGameCommonOptions):
     include_sponsorships:   IncludeSponsorship
     sponsorsanity:          Sponsorsanity
     difficult_monsters:     DifficultMonsters
-
-    # Logic
-    dungeon_logic:          DungeonLogic

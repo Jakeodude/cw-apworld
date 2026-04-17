@@ -23,6 +23,8 @@ reached_325k = "Reached 325,000 Total Views"
 reached_375k = "Reached 375,000 Total Views"
 reached_430k = "Reached 430,000 Total Views"
 reached_645k = "Reached 645,000 Total Views"
+reached_850k = "Reached 850,000 Total Views"
+reached_1m   = "Reached 1,000,000 Total Views"
 
 # ---- Sponsorships ----
 accepted_sponsorship_prefix  = "Accepted Sponsorship "   # + "1", "2", "3"

@@ -1,6 +1,6 @@
 # worlds/content_warning/locations.py
 
-from typing import Dict, List, Optional, Set, NamedTuple
+from typing import Dict, Optional, Set, NamedTuple
 from BaseClasses import Location
 
 from .names import region_names as rname
@@ -78,6 +78,8 @@ location_table: Dict[str, CWLocationData] = {
     lname.reached_375k: CWLocationData(rname.hub, 212, "Views", "late"),
     lname.reached_430k: CWLocationData(rname.hub, 213, "Views", "late"),
     lname.reached_645k: CWLocationData(rname.hub, 214, "Views", "late"),
+    lname.reached_850k: CWLocationData(rname.hub, 215, "Views", "late"),
+    lname.reached_1m:   CWLocationData(rname.hub, 216, "Views", "late"),
 
     # ==================== MONSTER FILMING CHECKS ====================
     # Early game monsters
@@ -117,7 +119,6 @@ location_table: Dict[str, CWLocationData] = {
     "Filmed Snail Spawner": CWLocationData(rname.dungeon, 326, "Monsters", "difficult"),
     "Filmed Big Slap":      CWLocationData(rname.dungeon, 327, "Monsters", "difficult"),
     "Filmed Ultra Knifo":   CWLocationData(rname.dungeon, 329, "Monsters", "difficult"),
-    "Filmed Angler":        CWLocationData(rname.dungeon, 330, "Monsters", "difficult"),
 
     # ==================== ARTIFACT FILMING CHECKS ====================
     # Early / mid game artifacts
@@ -249,15 +250,6 @@ for _loc_name, _loc_data in location_table.items():
     else:
         location_name_to_id[_loc_name] = None
 
-
-def _get_location_group(loc_name: str) -> str:
-    return location_table[loc_name].location_group or ""
-
-
-event_locations: List[str] = [
-    name for name, data in location_table.items()
-    if data.location_group == "Event"
-]
 
 # All non-event locations (used as the ceiling for pool balancing).
 # __init__.py adjusts this downward based on disabled option groups.

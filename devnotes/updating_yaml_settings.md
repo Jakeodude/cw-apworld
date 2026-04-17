@@ -25,4 +25,8 @@ remove "# Minimum 5, maximum 31.
 
 Remove Angler from the difficult_monsters description
 
-Remove dungeon logic. All monsters may spawn without any specif gear.
+Remove dungeon logic. All monsters may spawn without any specific gear and the player may enter the level without requirements.
+
+Remove angler from difficult monsters. Do not include it in the archipelago. 
+
+Also check the error on locations.py

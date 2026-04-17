@@ -2,9 +2,7 @@
 
 from typing import TYPE_CHECKING, List, Tuple
 from worlds.generic.Rules import add_rule
-from BaseClasses import CollectionState
 
-from .names import item_names as iname
 from .names import location_names as lname
 from .names import region_names as rname
 from .locations import location_table
@@ -13,26 +11,6 @@ from . import logic
 if TYPE_CHECKING:
     from . import ContentWarningWorld
 
-
-# ---------------------------------------------------------------------------
-# Monsters that require safety gear in Easy logic
-# (subset of mid/late/difficult monsters)
-# ---------------------------------------------------------------------------
-_DANGEROUS_MONSTERS = {
-    "Filmed Knifo",
-    "Filmed Big Slap",
-    "Filmed Streamer",
-    "Filmed Bomber",
-    "Filmed Fire",
-    "Filmed Harpooner",
-}
-
-# Monsters that require the FULL survival kit (safety gear + high oxygen)
-_VERY_DANGEROUS_MONSTERS = {
-    "Filmed Ultra Knifo",
-    "Filmed Angler",
-    "Filmed Black Hole Bot",
-}
 
 # ---------------------------------------------------------------------------
 # View milestone order and Progressive Views thresholds
@@ -53,6 +31,8 @@ _VIEW_MILESTONE_ORDER: List[Tuple[int, str]] = [
     (375_000, lname.reached_375k),
     (430_000, lname.reached_430k),
     (645_000, lname.reached_645k),
+    (850_000, lname.reached_850k),
+    (1_000_000, lname.reached_1m),
 ]
 
 # How many Progressive Views items are required before each higher milestone
@@ -66,6 +46,8 @@ _VIEW_THRESHOLDS = {
     lname.reached_375k: 7,
     lname.reached_430k: 8,
     lname.reached_645k: 10,
+    lname.reached_850k: 11,
+    lname.reached_1m:   12,
 }
 
 
@@ -74,7 +56,7 @@ def _get_views_goal_milestone(target: int) -> str:
     for views, loc_name in _VIEW_MILESTONE_ORDER:
         if views >= target:
             return loc_name
-    return lname.reached_645k  # fallback
+    return lname.reached_1m  # fallback
 
 
 # ---------------------------------------------------------------------------
@@ -104,7 +86,6 @@ def set_location_rules(world: "ContentWarningWorld") -> None:
     player = world.player
     options = world.options
 
-    easy_logic  = (options.dungeon_logic.value == options.dungeon_logic.option_easy)
     quota_on    = bool(options.quota_requirement.value)
     quota_count = options.quota_count.value
 
@@ -117,15 +98,15 @@ def set_location_rules(world: "ContentWarningWorld") -> None:
     victory_loc = multiworld.get_location(lname.victory, player)
 
     # -----------------------------------------------------------------------
-    # Primary Goal rules
+    # Primary Goal rules (all selected goals must be satisfied)
     # -----------------------------------------------------------------------
-    goal = options.goal.value
+    goal = options.goal.value  # frozenset of selected goal strings
 
-    if goal == options.goal.option_viral_sensation:
-        # Reach the highest view milestone.
-        add_rule(victory_loc, lambda state: logic.has_views(state, player, 10))
+    if "viral_sensation" in goal:
+        # Reach the 1,000,000 view milestone.
+        add_rule(victory_loc, lambda state: logic.has_views(state, player, 12))
 
-    elif goal == options.goal.option_views_goal:
+    if "views_goal" in goal:
         # Reach the nearest milestone at or above the configured target.
         milestone = _get_views_goal_milestone(options.views_goal_target.value)
         threshold = _VIEW_THRESHOLDS.get(milestone, 0)
@@ -139,7 +120,7 @@ def set_location_rules(world: "ContentWarningWorld") -> None:
             lambda state, m=milestone: state.can_reach_location(m, player),
         )
 
-    elif goal == options.goal.option_quota_goal:
+    if "quota_goal" in goal:
         # Must reach and complete quota N (requires Quota Requirement on).
         if quota_on and quota_count >= 1:
             nth_quota = lname.met_quota_prefix + str(quota_count)
@@ -148,10 +129,10 @@ def set_location_rules(world: "ContentWarningWorld") -> None:
                 lambda state, q=nth_quota: state.can_reach_location(q, player),
             )
         else:
-            # Quota disabled — fall back to viral sensation
-            add_rule(victory_loc, lambda state: logic.has_views(state, player, 10))
+            # Quota disabled — require viral sensation as fallback
+            add_rule(victory_loc, lambda state: logic.has_views(state, player, 12))
 
-    elif goal == options.goal.option_monster_hunter:
+    if "monster_hunter" in goal:
         count = options.monster_hunter_count.value
         monster_locs: List[str] = [
             n for n, d in location_table.items()
@@ -163,7 +144,7 @@ def set_location_rules(world: "ContentWarningWorld") -> None:
                 logic.count_reachable(state, player, locs) >= c,
         )
 
-    elif goal == options.goal.option_hat_collector:
+    if "hat_collector" in goal:
         count = options.hat_collector_count.value
         hat_locs: List[str] = [
             n for n, d in location_table.items()
@@ -175,7 +156,7 @@ def set_location_rules(world: "ContentWarningWorld") -> None:
                 logic.count_reachable(state, player, locs) >= c,
         )
 
-    elif goal == options.goal.option_item_collector:
+    if "item_collector" in goal:
         count = options.item_collector_count.value
         item_locs: List[str] = [
             n for n, d in location_table.items()
@@ -258,33 +239,6 @@ def set_location_rules(world: "ContentWarningWorld") -> None:
             add_rule(
                 multiworld.get_location(loc_name, player),
                 lambda state: logic.can_explore_late_dungeon(state, player),
-            )
-
-    # -----------------------------------------------------------------------
-    # Monster filming safety rules (Easy logic only)
-    # -----------------------------------------------------------------------
-    if easy_logic:
-        for monster_name in _DANGEROUS_MONSTERS:
-            # Only apply rules to monsters that actually exist in the location table
-            if monster_name not in location_table:
-                continue
-            if monster_name in _VERY_DANGEROUS_MONSTERS:
-                add_rule(
-                    multiworld.get_location(monster_name, player),
-                    lambda state: logic.can_survive_dungeon(state, player),
-                )
-            else:
-                add_rule(
-                    multiworld.get_location(monster_name, player),
-                    lambda state: logic.has_safety_gear(state, player),
-                )
-
-        for monster_name in _VERY_DANGEROUS_MONSTERS:
-            if monster_name not in location_table:
-                continue
-            add_rule(
-                multiworld.get_location(monster_name, player),
-                lambda state: logic.can_survive_dungeon(state, player),
             )
 
     # -----------------------------------------------------------------------

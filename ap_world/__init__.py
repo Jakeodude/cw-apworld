@@ -27,6 +27,8 @@ _HIGH_VIEW_MILESTONES = {
     lname.reached_375k,
     lname.reached_430k,
     lname.reached_645k,
+    lname.reached_850k,
+    lname.reached_1m,
 }
 
 
@@ -237,7 +239,7 @@ class ContentWarningWorld(World):
         options = self.options
         return {
             # Primary goal
-            "goal":                         int(options.goal.value),
+            "goal":                         sorted(options.goal.value),
             "views_goal_target":            int(options.views_goal_target.value),
             "monster_hunter_count":         int(options.monster_hunter_count.value),
             "hat_collector_count":          int(options.hat_collector_count.value),
@@ -261,7 +263,4 @@ class ContentWarningWorld(World):
             "include_sponsorships":         bool(options.include_sponsorships.value),
             "sponsorsanity":                bool(options.sponsorsanity.value),
             "difficult_monsters":           bool(options.difficult_monsters.value),
-
-            # Logic
-            "dungeon_logic":                int(options.dungeon_logic.value),
         }
