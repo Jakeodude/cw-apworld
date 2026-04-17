@@ -18,8 +18,10 @@ class GoalChoice(OptionSet):
                       (see Quota Requirement and Quota Count; requires Quota Requirement on).
     monster_hunter:   Film a configurable number of different monsters (see Monster Hunter Count).
     hat_collector:    Purchase a configurable number of hats (see Hat Collector Count).
+                      Note: automatically ignored if Include Hat Purchases is disabled.
     item_collector:   Purchase a configurable number of store items and emotes
-                      (see Item Collector Count)."""
+                      (see Item Collector Count).
+                      Note: automatically ignored if Include Emote Purchases is disabled."""
     display_name = "Goal"
     valid_keys = frozenset({
         "viral_sensation",
@@ -54,7 +56,8 @@ class MonsterHunterCount(Range):
 
 class HatCollectorCount(Range):
     """When Goal is 'hat_collector', the number of hats that must be purchased
-    to win. Minimum 5, maximum 31 (total hats available)."""
+    to win. Minimum 5, maximum 31 (total hats available).
+    Ignored when Include Hat Purchases is disabled (hat_collector goal is inactive)."""
     display_name = "Hat Collector Count"
     range_start  = 5
     range_end    = 31
@@ -63,7 +66,8 @@ class HatCollectorCount(Range):
 
 class ItemCollectorCount(Range):
     """When Goal is 'item_collector', the number of store items and emotes that
-    must be purchased to win. Minimum 5, maximum 33."""
+    must be purchased to win. Minimum 5, maximum 33.
+    Ignored when Include Emote Purchases is disabled (item_collector goal is inactive)."""
     display_name = "Item Collector Count"
     range_start  = 5
     range_end    = 33
@@ -93,58 +97,6 @@ class QuotaCount(Range):
     range_start  = 1
     range_end    = 10
     default      = 5
-
-
-# ===========================================================================
-# ADDITIONAL VICTORY REQUIREMENTS (stack on top of the main Goal)
-# ===========================================================================
-
-class ContentCompleteSanity(Toggle):
-    """When enabled, you must ALSO film a certain number of different monsters
-    to win, on top of the primary Goal.
-    Configure the required count with Content Complete Monster Count."""
-    display_name = "Content Complete Sanity"
-
-
-class ContentCompleteMonsterCount(Range):
-    """The number of different monsters that must be filmed as an additional
-    victory requirement when Content Complete Sanity is enabled."""
-    display_name = "Content Complete Monster Count"
-    range_start  = 5
-    range_end    = 33
-    default      = 12
-
-
-class Itemsanity(Toggle):
-    """When enabled, you must ALSO purchase a certain number of different store
-    items and emotes to win (in addition to the primary Goal).
-    Configure the required count with Itemsanity Count."""
-    display_name = "Itemsanity"
-
-
-class ItemsanityCount(Range):
-    """The number of different store items/emotes that must be purchased as an
-    additional victory requirement when Itemsanity is enabled."""
-    display_name = "Itemsanity Count"
-    range_start  = 5
-    range_end    = 33
-    default      = 10
-
-
-class Hatsanity(Toggle):
-    """When enabled, you must ALSO purchase a certain number of hats to win
-    (in addition to the primary Goal).
-    Configure the required count with Hatsanity Count."""
-    display_name = "Hatsanity"
-
-
-class HatsanityCount(Range):
-    """The number of hats that must be purchased as an additional victory
-    requirement when Hatsanity is enabled."""
-    display_name = "Hatsanity Count"
-    range_start  = 5
-    range_end    = 31
-    default      = 10
 
 
 # ===========================================================================
@@ -200,14 +152,6 @@ class ContentWarningGameOptions(PerGameCommonOptions):
     # Quota
     quota_requirement:          QuotaRequirement
     quota_count:                QuotaCount
-
-    # Extra win conditions
-    content_complete_sanity:         ContentCompleteSanity
-    content_complete_monster_count:  ContentCompleteMonsterCount
-    itemsanity:                      Itemsanity
-    itemsanity_count:                ItemsanityCount
-    hatsanity:                       Hatsanity
-    hatsanity_count:                 HatsanityCount
 
     # Optional location groups
     include_hats:           IncludeHats

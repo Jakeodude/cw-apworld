@@ -144,7 +144,9 @@ def set_location_rules(world: "ContentWarningWorld") -> None:
                 logic.count_reachable(state, player, locs) >= c,
         )
 
-    if "hat_collector" in goal:
+    # hat_collector is skipped when Include Hat Purchases is disabled,
+    # since no hat locations exist in the pool.
+    if "hat_collector" in goal and options.include_hats.value:
         count = options.hat_collector_count.value
         hat_locs: List[str] = [
             n for n, d in location_table.items()
@@ -156,7 +158,9 @@ def set_location_rules(world: "ContentWarningWorld") -> None:
                 logic.count_reachable(state, player, locs) >= c,
         )
 
-    if "item_collector" in goal:
+    # item_collector is skipped when Include Emote Purchases is disabled,
+    # since emote locations are removed from the pool.
+    if "item_collector" in goal and options.include_emotes.value:
         count = options.item_collector_count.value
         item_locs: List[str] = [
             n for n, d in location_table.items()
@@ -165,49 +169,6 @@ def set_location_rules(world: "ContentWarningWorld") -> None:
         add_rule(
             victory_loc,
             lambda state, c=count, locs=item_locs:
-                logic.count_reachable(state, player, locs) >= c,
-        )
-
-    # -----------------------------------------------------------------------
-    # Additional sanity win conditions (stack on top of primary goal)
-    # -----------------------------------------------------------------------
-
-    # Content Complete Sanity: must also film N monsters.
-    if options.content_complete_sanity.value:
-        cc_count = options.content_complete_monster_count.value
-        monster_locs = [
-            n for n, d in location_table.items()
-            if d.location_group == "Monsters"
-        ]
-        add_rule(
-            victory_loc,
-            lambda state, c=cc_count, locs=monster_locs:
-                logic.count_reachable(state, player, locs) >= c,
-        )
-
-    # Itemsanity: must also purchase N store items/emotes.
-    if options.itemsanity.value:
-        is_count = options.itemsanity_count.value
-        is_locs = [
-            n for n, d in location_table.items()
-            if d.location_group in ("Store Purchases", "Emotes")
-        ]
-        add_rule(
-            victory_loc,
-            lambda state, c=is_count, locs=is_locs:
-                logic.count_reachable(state, player, locs) >= c,
-        )
-
-    # Hatsanity: must also purchase N hats.
-    if options.hatsanity.value:
-        hs_count = options.hatsanity_count.value
-        hs_locs = [
-            n for n, d in location_table.items()
-            if d.location_group == "Hats"
-        ]
-        add_rule(
-            victory_loc,
-            lambda state, c=hs_count, locs=hs_locs:
                 logic.count_reachable(state, player, locs) >= c,
         )
 

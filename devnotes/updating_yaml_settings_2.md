@@ -6,5 +6,5 @@ hatsanity and hat_collector are the same thing. Remove hatsanity and its depende
 
 put in code and a note that if include_hats is off hat_collector will be off by default
 
-put in code and a note that if include emotes is off then item_collector will be off by default
+put in code and a note that if include_emotes is off then item_collector will be off by default
 

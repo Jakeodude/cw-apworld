@@ -249,14 +249,6 @@ class ContentWarningWorld(World):
             "quota_requirement":            bool(options.quota_requirement.value),
             "quota_count":                  int(options.quota_count.value),
 
-            # Sanity conditions
-            "content_complete_sanity":      bool(options.content_complete_sanity.value),
-            "content_complete_monster_count": int(options.content_complete_monster_count.value),
-            "itemsanity":                   bool(options.itemsanity.value),
-            "itemsanity_count":             int(options.itemsanity_count.value),
-            "hatsanity":                    bool(options.hatsanity.value),
-            "hatsanity_count":              int(options.hatsanity_count.value),
-
             # Location group toggles
             "include_hats":                 bool(options.include_hats.value),
             "include_emotes":               bool(options.include_emotes.value),
