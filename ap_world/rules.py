@@ -4,14 +4,14 @@ from typing import TYPE_CHECKING
 from worlds.generic.Rules import add_rule, set_rule
 from BaseClasses import CollectionState, ItemClassification
 
-from .names import item_names as iname
-from .names import location_names as lname
-from .names import region_names as rname
+from ..names import item_names as iname
+from ..names import location_names as lname
+from ..names import region_names as rname
 from .locations import location_table
 from . import logic
 
 if TYPE_CHECKING:
-    from . import ContentWarningWorld
+    from .. import ContentWarningWorld
 
 
 # ---------------------------------------------------------------------------

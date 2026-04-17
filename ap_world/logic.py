@@ -4,10 +4,10 @@
 from typing import TYPE_CHECKING
 from BaseClasses import CollectionState
 
-from .names import item_names as iname
+from ..names import item_names as iname
 
 if TYPE_CHECKING:
-    from . import ContentWarningWorld
+    from .. import ContentWarningWorld
 
 
 def has_safety_gear(state: CollectionState, player: int) -> bool:

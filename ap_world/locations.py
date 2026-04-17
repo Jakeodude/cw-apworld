@@ -3,8 +3,8 @@
 from typing import Dict, List, Optional, Set, NamedTuple
 from BaseClasses import Location
 
-from .names import region_names as rname
-from .names import location_names as lname
+from ..names import region_names as rname
+from ..names import location_names as lname
 
 
 class ContentWarningLocation(Location):

@@ -2,7 +2,7 @@
 
 from typing import Dict, Set
 
-from .names import region_names as rname
+from ..names import region_names as rname
 
 # Directed graph of region → set of exit region names.
 # Menu  ──► Hub  ──► Dungeon

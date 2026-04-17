@@ -122,3 +122,11 @@ Add the item Sketch Pad to the store purchase checks list
 
 Add the party popper to the store purchase checks list
 
+Make these Emotes early game checks.
+
+
+Make these Emotes mid game checks.
+
+
+
+Make these Emotes late game checks.

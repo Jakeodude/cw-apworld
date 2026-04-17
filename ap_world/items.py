@@ -4,7 +4,7 @@ from itertools import groupby
 from typing import Dict, List, Optional, Set, NamedTuple
 from BaseClasses import Item, ItemClassification
 
-from .names import item_names as iname
+from ..names import item_names as iname
 
 
 class ContentWarningItem(Item):
