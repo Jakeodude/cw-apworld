@@ -28,8 +28,9 @@ Zombe
 Spawn 3 Zombe
 Whisk
 Eye Guy
-Worm
 Knifo
-Dog
 Button Robot
+Mouthe
+Puffo
+
 Also have a trap that ragdolls the player for 5 seconds.
