@@ -70,6 +70,24 @@ class ContentWarningWorld(World):
     # Internal helpers
     # -----------------------------------------------------------------------
 
+    def _compute_reachable_monster_count(self) -> int:
+        """Return how many 'Monsters' group locations are logically reachable
+        given the current option settings.
+
+        Excludes:
+          • Multiplayer-only monsters (Weeping, Worm) when multiplayer_mode is off.
+          • Difficult-stage monsters when difficult_monsters is off.
+        Used by generate_early to clamp monster_hunter_count, and mirrored in
+        rules.py when constructing the monster_hunter victory rule.
+        """
+        options = self.options
+        return sum(
+            1 for name, data in location_table.items()
+            if data.location_group == "Monsters"
+            and not (name in _MULTIPLAYER_ONLY_MONSTERS and not options.multiplayer_mode.value)
+            and not (data.game_stage == "difficult" and not options.difficult_monsters.value)
+        )
+
     def _compute_location_total(self) -> int:
         """Return the real number of check locations that will be created,
         based on the current option settings."""
@@ -123,6 +141,27 @@ class ContentWarningWorld(World):
     def get_filler_item_name(self) -> str:
         """Return a random filler item name (money or meta coins only)."""
         return self.random.choice(filler_items)
+
+    # -----------------------------------------------------------------------
+    # Pre-generation validation
+    # -----------------------------------------------------------------------
+
+    def generate_early(self) -> None:
+        """Clamp option values that depend on runtime-computed reachable counts.
+
+        Runs before create_items and set_rules so the clamped values are used
+        consistently throughout generation and reported correctly in fill_slot_data.
+        """
+        options = self.options
+
+        # Cap monster_hunter_count to the number of monsters actually reachable
+        # with the current option set (solo vs multiplayer, difficult vs normal).
+        # Without this, a solo seed requesting more monsters than are accessible
+        # causes a FillError during generation.
+        if "monster_hunter" in options.goal.value:
+            max_reachable = self._compute_reachable_monster_count()
+            if options.monster_hunter_count.value > max_reachable:
+                options.monster_hunter_count.value = max_reachable
 
     # -----------------------------------------------------------------------
     # Item pool

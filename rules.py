@@ -134,13 +134,24 @@ def set_location_rules(world: "ContentWarningWorld") -> None:
 
     if "monster_hunter" in goal:
         count = options.monster_hunter_count.value
+        # Build the reachable monster list filtered by the current option set:
+        #   • Multiplayer-only monsters (Weeping, Worm) are excluded in solo seeds.
+        #   • Difficult monsters are excluded unless DifficultMonsters is enabled.
+        # This prevents a FillError when monster_hunter_count exceeds the actual
+        # number of reachable locations (e.g., solo seed with count=21+).
+        _mp_only_monsters = {"Filmed Weeping", "Filmed Worm"}
         monster_locs: List[str] = [
             n for n, d in location_table.items()
             if d.location_group == "Monsters"
+            and not (n in _mp_only_monsters and not options.multiplayer_mode.value)
+            and not (d.game_stage == "difficult" and not options.difficult_monsters.value)
         ]
+        # Clamp to what is actually available — generate_early also clamps the option
+        # value itself, but this guard makes the rule self-consistent regardless.
+        effective_count = min(count, len(monster_locs))
         add_rule(
             victory_loc,
-            lambda state, c=count, locs=monster_locs:
+            lambda state, c=effective_count, locs=monster_locs:
                 logic.count_reachable(state, player, locs) >= c,
         )
 
