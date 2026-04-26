@@ -34,9 +34,10 @@ _HIGH_VIEW_MILESTONES = {
 
 # Monster locations that require Multiplayer Mode (player_count > 1).
 # These are marked EXCLUDED in solo seeds and gated by an access rule in rules.py.
+# Worm was previously here but has been confirmed to spawn solo, so it is
+# treated as a normal mid-stage monster and may receive real items in any seed.
 _MULTIPLAYER_ONLY_MONSTERS = {
     "Filmed Weeping",
-    "Filmed Worm",
 }
 
 
@@ -276,6 +277,13 @@ class ContentWarningWorld(World):
             elif loc_name in _MULTIPLAYER_ONLY_MONSTERS and not options.multiplayer_mode.value:
                 # Solo play: multiplayer-only monster checks always get filler.
                 loc.progress_type = LocationProgressType.EXCLUDED
+            elif (
+                loc_data.location_group == "Monster Tiers"
+                and options.filler_multi_sightings.value
+            ):
+                # Filler Multi-Sightings option (default on): tier-2/tier-3
+                # monster and artifact locations only hold filler items.
+                loc.progress_type = LocationProgressType.EXCLUDED
 
             region.locations.append(loc)
 
@@ -325,4 +333,5 @@ class ContentWarningWorld(World):
             "difficult_monsters":           bool(options.difficult_monsters.value),
             "multiplayer_mode":             bool(options.multiplayer_mode.value),
             "monster_tiers":                bool(options.monster_tiers.value),
+            "filler_multi_sightings":       bool(options.filler_multi_sightings.value),
         }

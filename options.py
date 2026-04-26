@@ -155,6 +155,17 @@ class MonsterTiers(Toggle):
     display_name = "Monster Tiers"
 
 
+class FillerMultiSightings(DefaultOnToggle):
+    """When enabled, all monster and artifact tier-2 / tier-3 locations
+    (the 'Monster Tiers' group, created by the Monster Tiers option) hold
+    only filler items — no progression or useful items are placed there.
+    The locations themselves still exist; only their item classification is
+    constrained.  Disable to let real items spawn behind multi-sighting
+    checks, increasing item-pool density at the cost of more required dives.
+    Has no effect when Monster Tiers is disabled."""
+    display_name = "Filler Multi-Sightings"
+
+
 # ===========================================================================
 # OPTIONS DATACLASS
 # ===========================================================================
@@ -180,3 +191,4 @@ class ContentWarningGameOptions(PerGameCommonOptions):
     difficult_monsters:     DifficultMonsters
     multiplayer_mode:       MultiplayerMode
     monster_tiers:          MonsterTiers
+    filler_multi_sightings: FillerMultiSightings
