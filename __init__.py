@@ -204,25 +204,22 @@ class ContentWarningWorld(World):
         named_total: int = sum(items_to_create.values())
         total_filler = max(0, self.location_total - named_total)
 
-        # Generate minimum money thresholds to ensure baseline economy.
-        # Early: 10×$100 = $1,000
-        for _ in range(10):
-            cw_items.append(self.create_item(iname.money_100))
-        # Mid: 5×$100 + 5×$200 = $1,500
-        for _ in range(5):
-            cw_items.append(self.create_item(iname.money_100))
-        for _ in range(5):
-            cw_items.append(self.create_item(iname.money_200))
-        # Late: 5×$100 + 5×$200 + 5×$400 = $3,500
-        for _ in range(5):
-            cw_items.append(self.create_item(iname.money_100))
-        for _ in range(5):
-            cw_items.append(self.create_item(iname.money_200))
-        for _ in range(5):
-            cw_items.append(self.create_item(iname.money_400))
+        # Guaranteed minimum money pool — pool-count interpretation per issue #3.
+        # AP scatters these freely; quota pacing handles when the player sees them.
+        # Early ($1,000):  4×$50 + 8×$100
+        # Mid   ($1,000):  4×$50 + 4×$100 + 2×$200
+        # Late  ($2,200):  4×$50 + 2×$100 + 3×$200 + 3×$400
+        money_minimums: Dict[str, int] = {
+            iname.money_50:  4 + 4 + 4,   # 12
+            iname.money_100: 8 + 4 + 2,   # 14
+            iname.money_200: 0 + 2 + 3,   # 5
+            iname.money_400: 0 + 0 + 3,   # 3
+        }
+        for name, count in money_minimums.items():
+            for _ in range(count):
+                cw_items.append(self.create_item(name))
 
-        # Subtract the 25 minimum money items from filler count.
-        total_filler -= 25
+        total_filler -= sum(money_minimums.values())
 
         # Remaining slots are filled with weighted money filler.
         # Common: $50 / $100 / $200 (3× weight each); Rare: $400 (1× each).
